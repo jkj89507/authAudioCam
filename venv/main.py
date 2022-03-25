@@ -18,19 +18,17 @@ with microphone as audioFile:
 
     try:
         print("Total speeach: ")
-        file = open('total.txt', 'w')
         str = ""
         for i in recognizer.recognize_sphinx(audio):
             str += i
         print(str)
-        file.write(str)
         stopTime = time.time()
         spendTime = int(stopTime - startTime)
         sec = spendTime % 60
         min = spendTime // 60
         print(min, "m", sec, "s")
     except Exception as error:
-        print("Erorr is ", str(error))
+        print("Erorr is ", error)
 #
 # speech = LiveSpeech(
 #     verbose=False,
