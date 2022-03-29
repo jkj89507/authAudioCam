@@ -1,8 +1,11 @@
 import tkinter
+import imutils
+import pickle
 import cv2
 import PIL.Image, PIL.ImageTk
 import time
 import os
+import face_recognition
 
 faceCascade = cv2.CascadeClassifier()
 if not faceCascade.load(cv2.samples.findFile('faces.xml')):
@@ -27,14 +30,15 @@ class App:
         self.window.mainloop()
 
     def snapshot(self):
-        ret, frame, x, y, w, h = self.accessCamera.get_frame()
+        ret, frame = self.accessCamera.get_frame()
 
         if ret:
-            cv2.imwrite("Dataset/photo{}.png".format(time.time()),
-                cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)[y:y + h, x:x + w])
+            cv2.imwrite("Dataset/photo{}.jpg".format(time.time()),
+                cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            exit(0)
 
     def update(self):
-        ret, frame, *trash = self.accessCamera.get_frame()
+        ret, frame = self.accessCamera.get_frame()
 
         if ret:
             self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
@@ -68,7 +72,7 @@ class MyVideoCapture:
                 for (x, y, w, h) in faces:
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (219,255,253), 1)
 
-                return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), x, y, w, h)
+                return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             else:
                 return (ret, None)
         else:
@@ -80,61 +84,33 @@ class MyVideoCapture:
 
 # App(tkinter.Tk(), "Tkinter and OpenCV")
 
-recognizer = cv2.face.LBPHFaceRecognizer_create()
-try:
-    recognizer.read("trainer/trainer.yml")
-except:
-    print("11111111")
-    exit(0)
+data = pickle.loads(open('face_enc', "rb").read())
+image = cv2.imread("Dataset/photo1648562379.7690928.jpg")
+rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+faces = faceCascade.detectMultiScale(gray,
+                                     scaleFactor=1.1,
+                                     minNeighbors=5,
+                                     minSize=(60, 60),
+                                     flags=cv2.CASCADE_SCALE_IMAGE)
 
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-# iniciate id counter
-id = 0
-
-# names related to ids: example ==> Marcelo: id=1,  etc
-names = ['None', 'User1']
-
-# Initialize and start realtime video capture
-accessCamera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-accessCamera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-accessCamera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
-
-minW = 0.1*accessCamera.get(cv2.CAP_PROP_FRAME_WIDTH)
-minH = 0.1*accessCamera.get(cv2.CAP_PROP_FRAME_HEIGHT)
-
-while True:
-    ret, frame = accessCamera.read()
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = faceCascade.detectMultiScale(
-        gray,
-        scaleFactor=1.3,
-        minNeighbors=5,
-        minSize=(int(minW), int(minH)),
-    )
-
-    for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        id, confidence = recognizer.predict(gray[y:y + h, x:x + w])
-
-        # Check if confidence is less them 100 ==> "0" is perfect match
-        if (confidence < 100):
-            id = names[id]
-            confidence = "  {0}%".format(round(100 - confidence))
-        else:
-            id = "unknown"
-            confidence = "  {0}%".format(round(100 - confidence))
-
-        cv2.putText(frame, str(id), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
-        cv2.putText(frame, str(confidence), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
-
-    cv2.imshow('camera', frame)
-
-    k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
-    if k == 27:
-        break
-
-# Do a bit of cleanup
-print("\n [INFO] Exiting Program and cleanup stuff")
-accessCamera.release()
-cv2.destroyAllWindows()
+encodings = face_recognition.face_encodings(rgb)
+names = []
+for encoding in encodings:
+    matches = face_recognition.compare_faces(data["encodings"],
+                                             encoding)
+    name = "Unknown"
+    if True in matches:
+        matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+        counts = {}
+        for i in matchedIdxs:
+            name = data["names"][i]
+            counts[name] = counts.get(name, 0) + 1
+            name = max(counts, key=counts.get)
+        names.append(name)
+        for ((x, y, w, h), name) in zip(faces, names):
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.putText(image, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX,
+                        0.75, (0, 255, 0), 2)
+    cv2.imshow("Frame", image)
+    cv2.waitKey(0)
