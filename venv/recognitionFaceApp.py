@@ -29,12 +29,46 @@ class App:
 
         self.window.mainloop()
 
+    def recog(self, path: str):
+        self.data = pickle.loads(open('face_enc', "rb").read())
+        self.image = cv2.imread("Dataset/" + path)
+        self.rgb = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
+        self.gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        self.faces = faceCascade.detectMultiScale(self.gray,
+                                             scaleFactor=1.1,
+                                             minNeighbors=5,
+                                             minSize=(60, 60),
+                                             flags=cv2.CASCADE_SCALE_IMAGE)
+
+        self.encodings = face_recognition.face_encodings(self.rgb)
+        self.names = []
+        for encoding in self.encodings:
+            matches = face_recognition.compare_faces(self.data["encodings"],
+                                                     encoding)
+            name = "Unknown"
+            if True in matches:
+                matchedIdxs = [i for (i, b) in enumerate(matches) if b]
+                counts = {}
+                for i in matchedIdxs:
+                    name = self.data["names"][i]
+                    counts[name] = counts.get(name, 0) + 1
+                    name = max(counts, key=counts.get)
+                self.names.append(name)
+                for ((x, y, w, h), name) in zip(self.faces, self.names):
+                    cv2.rectangle(self.image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    cv2.putText(self.image, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX,
+                                0.75, (0, 255, 0), 2)
+            cv2.imshow("Frame", self.image)
+            cv2.waitKey(0)
+
     def snapshot(self):
         ret, frame = self.accessCamera.get_frame()
 
         if ret:
-            cv2.imwrite("Dataset/photo{}.jpg".format(time.time()),
+            temp = "photo{}.jpg".format(time.time())
+            cv2.imwrite("Dataset/" + temp,
                 cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            App.recog(self, temp)
             exit(0)
 
     def update(self):
@@ -69,8 +103,8 @@ class MyVideoCapture:
                         minSize=(20, 20)
                     )
 
-                for (x, y, w, h) in faces:
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (219,255,253), 1)
+                # for (x, y, w, h) in faces:
+                #     cv2.rectangle(frame, (x, y), (x + w, y + h), (219,255,253), 1)
 
                 return (ret, cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             else:
@@ -82,35 +116,4 @@ class MyVideoCapture:
         if self.accessCamera.isOpened():
             self.accessCamera.release()
 
-# App(tkinter.Tk(), "Tkinter and OpenCV")
-
-data = pickle.loads(open('face_enc', "rb").read())
-image = cv2.imread("Dataset/photo1648562379.7690928.jpg")
-rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-faces = faceCascade.detectMultiScale(gray,
-                                     scaleFactor=1.1,
-                                     minNeighbors=5,
-                                     minSize=(60, 60),
-                                     flags=cv2.CASCADE_SCALE_IMAGE)
-
-encodings = face_recognition.face_encodings(rgb)
-names = []
-for encoding in encodings:
-    matches = face_recognition.compare_faces(data["encodings"],
-                                             encoding)
-    name = "Unknown"
-    if True in matches:
-        matchedIdxs = [i for (i, b) in enumerate(matches) if b]
-        counts = {}
-        for i in matchedIdxs:
-            name = data["names"][i]
-            counts[name] = counts.get(name, 0) + 1
-            name = max(counts, key=counts.get)
-        names.append(name)
-        for ((x, y, w, h), name) in zip(faces, names):
-            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(image, name, (x, y), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.75, (0, 255, 0), 2)
-    cv2.imshow("Frame", image)
-    cv2.waitKey(0)
+App(tkinter.Tk(), "Tkinter and OpenCV")
