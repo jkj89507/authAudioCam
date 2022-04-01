@@ -1,6 +1,7 @@
 from  tkinter import *
 from  tkinter import ttk, messagebox, Label
 from recordAudio import recordVoice
+from teacherFace import getDataForTeach
 from PIL import ImageTk, Image
 
 mainApp = Tk()
@@ -50,7 +51,9 @@ btnInfo.place(x=372, y=0)
 
 
 def openVoiceRecorder():
-    if (userName.get() != ""):
+    if (userName.get() != "" and userName.get().find(' ') == -1
+    and userName.get().find('/') == -1
+    and userName.get().find(',') == -1):
         widthVoiceRecorder = 400
         heighVoiceRecorder = 200
         wsVoiceRecorder = mainApp.winfo_screenwidth()
@@ -89,6 +92,21 @@ def openVoiceRecorder():
                              command=lambda: recordVoice(str(userName.get()), int(seconds.get()), 1))
         voiceRecord.image = microImageRender
         voiceRecord.place(x=180, y=0)
+    else:
+        messagebox.showwarning('Warning!',"Поле для ввода пользователя не может быть пустым\n"
+                                          "и не может содержать символы: ',' , '/', ' ' ")
+        userName.set("")
+
+
+def openFaceRecognition():
+    if (userName.get() != "" and userName.get().find(' ') == -1
+    and userName.get().find('/') == -1
+    and userName.get().find(',') == -1):
+        getDataForTeach(str(userName.get()), )
+    else:
+        messagebox.showwarning('Warning!',"Поле для ввода пользователя не может быть пустым\n"
+                                          "и не может содержать символы: ',' , '/', ' ' ")
+        userName.set("")
 
 userName = StringVar()
 
@@ -96,12 +114,12 @@ inputName = Entry(tab2, width=20, textvariable=userName)
 btnGetVoice = Button(tab2, text='Записать голос',
                   width=20, height=1, command=openVoiceRecorder)
 btnGetFace = Button(tab2, text='Сфотографировироваться',
-                  width=20, height=1, command=())
+                  width=20, height=1, command=openFaceRecognition)
 inputName.place(x=130, y=30)
 btnGetVoice.place(x=130, y=60)
 btnGetFace.place(x=130, y=90)
 
-
+#------------------2nd window------------------------------
 
 tabContol.pack(expand=1, fill="both")
 mainApp.mainloop()

@@ -6,7 +6,7 @@ import os
 import face_recognition
 import pickle
 
-MAIN_PATH = "Dataset/User1"
+MAIN_PATH = "Dataset/"
 
 recognizer = cv2.face.LBPHFaceRecognizer_create()
 faceCascade = cv2.CascadeClassifier()
@@ -16,19 +16,6 @@ if not faceCascade.load(cv2.samples.findFile('faces.xml')):
 
 
 def teachFace(path: str):
-#     imageListPaths = [os.path.join(path, file) for file in os.listdir(path)]
-#     faceSamples = []
-#     ids = []
-#     for imagePath in imageListPaths:
-#         PIL_img = Image.open(imagePath).convert('L')
-#         img_numpy = np.array(PIL_img, 'uint8')
-#         id = int(os.path.split(imagePath)[-1].split(".")[1])
-#         for (x, y, w, h) in faceCascade.detectMultiScale(img_numpy):
-#             faceSamples.append(img_numpy[y:y + h, x:x + w])
-#             ids.append(id)
-#     recognizer.train(faceSamples, np.array(ids))
-#     recognizer.save("trainer/trainer.yml")
-
     imagePaths = list(paths.list_images(path))
     knownEncodings = []
     knownNames = []
@@ -46,13 +33,16 @@ def teachFace(path: str):
     f.write(pickle.dumps(data))
     f.close()
 
-def getDataForTeach(idUser: int, video_source=0):
+def getDataForTeach(userName: str, video_source=0):
+    totalPath = os.path.join(MAIN_PATH, userName)
+    os.mkdir(totalPath)
+
     index = 0
     accessCamera = cv2.VideoCapture(video_source, cv2.CAP_DSHOW)
     accessCamera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
     accessCamera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
-    print("Collecting data for User" + str(idUser) + "...")
+    print("Collecting data for User" + userName + "...")
     while(True):
         ret, frame = accessCamera.read()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -62,7 +52,7 @@ def getDataForTeach(idUser: int, video_source=0):
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
             index += 1
 
-        cv2.imwrite(MAIN_PATH + "/" + str(index) + ".jpg", gray[y:y+h,x:x+w])
+        cv2.imwrite(totalPath + '/' + str(index) + ".jpg", gray[y:y+h,x:x+w])
         cv2.imshow('Collecting...', frame)
         if index == 20:
             break
@@ -71,4 +61,4 @@ def getDataForTeach(idUser: int, video_source=0):
     cv2.destroyAllWindows()
 
 # getDataForTeach(1, )
-teachFace(MAIN_PATH)
+# teachFace(MAIN_PATH)
