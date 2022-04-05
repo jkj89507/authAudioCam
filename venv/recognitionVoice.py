@@ -29,9 +29,3 @@ def recognitionVoice(nameFirstAudio: str, nameSecondAudio: str):
 
     ## Загружаем несколько аудиодорожек
     return confidence(process_audio(nameFirstAudio), process_audio(nameSecondAudio))
-
-recordVoice("first", 7, 1)
-print("wait 10 seconds....")
-time.sleep(10)
-recordVoice("second", 7, 1)
-print(recognitionVoice("first.wav", "second.wav"))

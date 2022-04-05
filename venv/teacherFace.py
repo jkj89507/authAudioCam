@@ -16,7 +16,7 @@ if not faceCascade.load(cv2.samples.findFile('faces.xml')):
 
 
 def teachFace(path: str):
-    imagePaths = list(paths.list_images(path))
+    imagePaths = list(paths.list_images(MAIN_PATH + path))
     knownEncodings = []
     knownNames = []
     for (i, imagePath) in enumerate(imagePaths):
@@ -29,7 +29,7 @@ def teachFace(path: str):
             knownEncodings.append(encoding)
             knownNames.append(name)
     data = {"encodings": knownEncodings, "names": knownNames}
-    f = open("face_enc", "wb")
+    f = open(path, "wb")
     f.write(pickle.dumps(data))
     f.close()
 
@@ -42,7 +42,7 @@ def getDataForTeach(userName: str, video_source=0):
     accessCamera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
     accessCamera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 
-    print("Collecting data for User" + userName + "...")
+    print("Collecting data for " + userName + "...")
     while(True):
         ret, frame = accessCamera.read()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -59,6 +59,3 @@ def getDataForTeach(userName: str, video_source=0):
     print("Stop collecting...")
     accessCamera.release()
     cv2.destroyAllWindows()
-
-# getDataForTeach(1, )
-# teachFace(MAIN_PATH)
