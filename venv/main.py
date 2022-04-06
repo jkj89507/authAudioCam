@@ -22,7 +22,7 @@ y = (hs/2) - (h/2) - 50
 voiceCheck = BooleanVar()
 faceCheck = BooleanVar()
 voiceCheck.set(False)
-faceCheck.set(True)
+faceCheck.set(False)
 
 mainApp.title("SHODAN")
 mainApp.geometry('%dx%d+%d+%d' % (w, h, x, y))
@@ -32,9 +32,11 @@ mainApp.attributes('-alpha', 0.95)
 tabContol = ttk.Notebook(mainApp)
 tab1 = ttk.Frame(tabContol)
 tab2 = ttk.Frame(tabContol)
+tab3 = ttk.Frame(tabContol)
 
 tabContol.add(tab1, text="Авторизация")
 tabContol.add(tab2, text="Регистрация")
+tabContol.add(tab3, text="Настройка")
 
 loadImage = Image.open("thumb-1920-40977.jpg").resize((400, 300), Image.ANTIALIAS)
 renderImage = ImageTk.PhotoImage(loadImage)
@@ -47,7 +49,7 @@ userName2 = StringVar()
 
 def authAudioFace():
     mainApp.destroy()
-    if (faceCheck.get() == True):
+    if (faceCheck.get() == True and voiceCheck.get() == True):
         th1 = Thread(target=runAppFace())
         th2 = Thread(target=openVoiceRecorderSecond())
         th3 = Thread(target=recognition())
@@ -60,7 +62,29 @@ def authAudioFace():
         th2.join()
         th3.join()
 
+    if (faceCheck.get() == True and voiceCheck.get() == False):
+        th1 = Thread(target=runAppFace())
+        th3 = Thread(target=recognition())
+
+        th1.start()
+        th3.start()
+
+        th1.join()
+        th3.join()
+
+    if (faceCheck.get() == False and voiceCheck.get() == True):
+        th2 = Thread(target=openVoiceRecorderSecond())
+        th3 = Thread(target=recognition())
+
+        th2.start()
+        th3.start()
+
+        th2.join()
+        th3.join()
+
+
 inputName2 = Entry(tab1, width=20, textvariable=userName2)
+inputLabel = Label(tab1, text="Логин: ")
 btnLogin = Button(tab1, text='Войти', bg='#343638',
                   fg='#04d142', width=20,
                   height=1, command=authAudioFace)
@@ -73,14 +97,15 @@ def showAuthorInfo():
 
 btnInfo = Button(tab1, text=' ? ', bg='#343638', fg='#04d142',
                   width=2, height=1,command=showAuthorInfo)
-inputName2.place(x=20, y=300)
+inputLabel.place(x=35, y=302)
+inputName2.place(x=85, y=302)
 labelStartMenu.place(x=110, y=130)
-btnLogin.place(x=150, y=300)
+btnLogin.place(x=215, y=302)
 btnInfo.place(x=372, y=0)
 #--------------------1st window-----------------------------
 
 userName1 = StringVar()
-
+inputLabel = Label(tab2, text="Логин: ")
 inputName = Entry(tab2, width=20, textvariable=userName1)
 btnGetVoice = Button(tab2, text='Записать голос',
                   width=20, height=1, command=lambda: openVoiceRecorderFirst())
@@ -97,17 +122,19 @@ def openFaceRecognition():
 
 btnGetFace = Button(tab2, text='Сфотографировироваться',
                   width=20, height=1, command=openFaceRecognition)
-voiceCheckChBt = Checkbutton(tab2, text='Авторизация по голосу', var=voiceCheck)
-faceCheckChBt = Checkbutton(tab2, text='Авторизация по лицу', var=faceCheck)
 
+inputLabel.place(x=90, y=80)
+inputName.place(x=140, y=80)
+btnGetVoice.place(x=130, y=110)
+btnGetFace.place(x=130, y=140)
+#------------------2nd window------------------------------
 
-inputName.place(x=130, y=30)
-btnGetVoice.place(x=130, y=60)
-btnGetFace.place(x=130, y=90)
-faceCheckChBt.place(x=130, y=120)
+faceCheckChBt = Checkbutton(tab3, text='Авторизация по лицу', var=faceCheck)
+voiceCheckChBt = Checkbutton(tab3, text='Авторизация по голосу', var=voiceCheck)
+faceCheckChBt.place(x=130, y=100)
 voiceCheckChBt.place(x=130, y=150)
 
-#------------------2nd window------------------------------
+#------------------3nd window------------------------------
 
 tabContol.pack(expand=1, fill="both")
 
@@ -125,8 +152,13 @@ def recognition():
     file = open("temp.txt", 'r')
     content = str(file.readline())
     file.close()
-    recog(content, str(userName2.get()))
-    print(recognitionVoice(str(userName2.get()) + "_1.wav", str(userName2.get()) + "_2.wav"))
+
+    if (faceCheck.get() == True):
+        recog(content, str(userName2.get()))
+
+    if (voiceCheck.get() == True):
+        print(recognitionVoice(str(userName2.get()) + "_1.wav", str(userName2.get()) + "_2.wav"))
+
     return 0
 
 
