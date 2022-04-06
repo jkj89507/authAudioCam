@@ -6,7 +6,7 @@ from PIL import ImageTk, Image
 from threading import Thread
 
 from recordAudio import recordVoice
-from teacherFace import getDataForTeach, teachFace
+from teacherFace import getDataForTeach, teachFace, MAIN_PATH
 from recognitionFaceApp import App, recog
 from recognitionVoice import recognitionVoice
 
@@ -153,11 +153,21 @@ def recognition():
     content = str(file.readline())
     file.close()
 
+    getNameFromPhotoRecog = ""
+    getValueFromAudioRecog = 100
     if (faceCheck.get() == True):
-        recog(content, str(userName2.get()))
+        getNameFromPhotoRecog = recog(content, str(userName2.get()))[len(MAIN_PATH):]
 
     if (voiceCheck.get() == True):
-        print(recognitionVoice(str(userName2.get()) + "_1.wav", str(userName2.get()) + "_2.wav"))
+        getValueFromAudioRecog = 100 - int(recognitionVoice(str(userName2.get()) + "_1.wav", str(userName2.get()) +
+                                                        "_2.wav") * 100)
+    print(getNameFromPhotoRecog)
+    print(getValueFromAudioRecog)
+
+    if (getNameFromPhotoRecog != "Unknown" and getValueFromAudioRecog > 70):
+        messagebox.showinfo("Login success", "Welcome {}!".format(str(userName2.get())))
+    else:
+        messagebox.showwarning("Access denied", "Photo/audio auth is invalid!")
 
     return 0
 

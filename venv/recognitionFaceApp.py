@@ -121,3 +121,4 @@ def recog(path: str, userNameEncrypt: str):
                             0.75, (0, 255, 0), 2)
         cv2.imshow("Frame", image)
         cv2.waitKey(0)
+        return name
